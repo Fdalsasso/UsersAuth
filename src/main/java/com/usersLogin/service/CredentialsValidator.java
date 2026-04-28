@@ -12,14 +12,16 @@ import org.passay.rule.WhitespaceRule;
 
 import com.usersLogin.exception.InvalidPasswordException;
 import com.usersLogin.exception.WeakPasswordException;
+import com.usersLogin.model.User;
 
 import java.util.List;
 
 public class CredentialsValidator {
 
     private final PasswordValidator validator;
+    private final UserService service;
 
-    public CredentialsValidator() {
+    public CredentialsValidator(UserService service) {
         validator = new DefaultPasswordValidator(
             new LengthRule(8, 128),
             new CharacterRule(EnglishCharacterData.UpperCase, 1),
@@ -29,6 +31,7 @@ public class CredentialsValidator {
             new WhitespaceRule(),
             new UsernameRule()
         );
+        this.service = service;
     }
 
     /**
@@ -49,6 +52,11 @@ public class CredentialsValidator {
         
         List<String> messages = result.getMessages();
         throw new WeakPasswordException(String.join("\n", messages));
+    }
 
+    public boolean areValidCredentials(String email, String hashedPassword) {
+        User user = service.findByEmail(email);
+        if (user.getHashedPassword().equals(hashedPassword)) { return true; }
+        throw new InvalidPasswordException(email);
     }
 }
